@@ -12,8 +12,7 @@
 
 import numpy as np
 
-
-class Config:
+class Universe:
 
     def __init__(self):
         self.bc = boundary_conditions

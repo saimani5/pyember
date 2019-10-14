@@ -1,0 +1,20 @@
+"""The configurations class should have
+
+1. 3D Array
+2. List of atoms and coordinates
+3. Conversion between 1 and 2
+4. Periodic boundary conditions
+5. Lattice Type
+6. Atom Names
+7. Helper functions (possibly)
+8. Easier slicing methods
+"""
+
+class config():
+
+    def array_to_list(self):
+
+    def list_to_array(self):
+
+    def __init__(self):
+        self.bc = boundary_conditions
