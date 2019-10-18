@@ -10,6 +10,7 @@
 import sys
 import re
 from itertools import product
+import numpy as np
 
 def make_sc(box):
     print('sc', *box)
@@ -61,14 +62,6 @@ def make_heisenberg(dims=(8, 8, 8), pbc=(1, 1, 1), random=True):
         config['latt_intra'][...,1] = 2.*np.pi*np.random.random(size=dims) 
 
     return config
-
-def write_latt(latt, fname):
-
-    with open(fname, 'w') as fo:
-        fo.write('{0:d}\n'.format(latt['nat']))
-        fo.write('{0} {1:d} {2:d} {3:d}\n'.format(*latt['box']))
-        for row in latt['xyzs']:
-            fo.write('{0} {1:d} {2:d} {3:d}\n'.format(*row))
 
 
 if __name__ == "__main__":
