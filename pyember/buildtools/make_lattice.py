@@ -9,6 +9,7 @@
 
 import sys
 import re
+from itertools import product
 
 def make_sc(box):
     print('sc', *box)
@@ -38,6 +39,28 @@ def make_fcc(box):
                 latt['xyzs'].append(['Ni', rx, iy, iz])
 
     return latt
+
+def make_heisenberg(dims=(8, 8, 8), pbc=(1, 1, 1), random=True):
+
+    config = {}
+    config['nat'] = np.prod(dims)
+    config['box'] = np.diag(dims)
+    config['pbc'] = pbc
+
+    config['atom_types'] = np.zeros((config['nat'],), dtype=int)
+    xyz = [(x, y, z) for x, y, z in product(range(dims[0]), range(dims[1]), range(dims[2]))]
+    config['xyz'] = np.array(xyz)
+
+    config['latt_types'] = np.zeros(dims, dtype=int)
+    config['latt_intra'] = np.zeros(tuple(dims) + (2,), dtype='float64')
+
+    if random:
+        # cos(theta) uniformly distributed in (-1, 1)
+        config['latt_intra'][...,0] = 2.*np.random.random(size=dims) - 1.
+        # phi uniformly distributed in (0, 2*pi)
+        config['latt_intra'][...,1] = 2.*np.pi*np.random.random(size=dims) 
+
+    return config
 
 def write_latt(latt, fname):
 
