@@ -32,6 +32,7 @@ def read_xyz(filename):
 
         # box parameters (type, dimension, shape, periodicity)
         sarr = re.findall('\S+', f.readline())
+        config['latt_type'] = sarr[0]
         dims = tuple(map(int, sarr[1:4]))
         config['box'] = np.diag(dims)
         config['pbc'] = tuple(map(int, sarr[4:7]))
@@ -40,17 +41,22 @@ def read_xyz(filename):
 
         atom_types = []
         xyz = []
-        config['latt_types'] = np.zeros(dims, dtype=int)
+        config['latt_i'] = np.zeros(dims, dtype=int)
+        config['latt_atoms'] = np.zeros(dims, dtype=int)
         config['latt_intra'] = np.zeros(tuple(dims) + (dim_intra,), dtype='float64')
         for i in range(config['nat']):
             sarr = re.findall('\S+', f.readline())
             t = int(sarr[0])
             r = tuple(map(int, sarr[1:4]))
 
+            latt_i.append(
+
             atom_types.append(t)
             xyz.append(r)
 
-            config['latt_types'][r] = t
+            config['latt_i'][r] = i
+            config['latt_atoms'][r] = t
+
             for j in range(dim_intra):
                 ci = float(sarr[4 + j])
                 config['latt_intra'][r[0], r[1], r[2], j] = ci
@@ -74,10 +80,10 @@ def write_xyz(config, filename):
 
     with open(filename, 'w') as f:
         # number of atoms (spins)
-        f.write(f"{config['nat']}\n")
+        f.write("{}\n".format(config['nat']))
 
         # information line
-        f.write("SC ")
+        f.write("{} ".format(config['latt_type']))
         f.write("{} {} {}".format(*list(np.diag(config['box']))))
         f.write(" {} {} {}".format(*list(config['pbc'])))
 

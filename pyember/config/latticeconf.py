@@ -11,6 +11,11 @@ class LatticeConf:
     similar to hdf5 format.
     """
 
+    self._required_keys = set(
+                ['latt_i', 'latt_type', 'xyz', 'atom_types',
+                 'latt_atoms', 'nat', 'pbc', 'box']
+            )
+
     def __init__(self, config, inplace=True):
         """Creates a configuration object from a dictionary or another config
         object"""
@@ -30,10 +35,13 @@ class LatticeConf:
             else:
                 self._config = copy.deepcopy(config._config)
 
+        if not self._check_consistency():
+            raise ValueError('Configuration is not formed properly')
+
 
     def __getitem__(self, key):
         """
-        Implement column (property) access and row slicing of trajectories
+        Implements column (property) access and row slicing of trajectories
 
         Parameters
         ----------
@@ -52,35 +60,17 @@ class LatticeConf:
             raise TypeError('Invalid argument type: {}: {}.'.format(key, type(key)))
 
 
+    def __setitem__(self, key, value):
+        self._config[key] = value
 
-    def to_xyz(self, file_name):
-        """
-        Save configuration to extended XYZ file format
-        """
+    def _check_consistency(self):
 
-        with open(file_name, 'w') as f:
-            # cycle through configurations in trajectory, assign atom names, and write to file
+        config_keys = self._config.keys()
 
-            for box, xyz in zip(self['box'], self['xyz']):
+        for key in self._config.keys():
+            if key not in self._required_keys:
+                return False
 
-                # write total number of atoms
-                nat = sum(self['atom_num'])
-                #f.write(f'{nat}\n')
-                f.write('{}\n'.format(nat))
 
-                # write box parameters
-                ax, ay, az = box[0,0], box[0,1], box[0,2]
-                bx, by, bz = box[1,0], box[1,1], box[1,2]
-                cx, cy, cz = box[2,0], box[2,1], box[2,2]
-                #f.write(f'{ax} {ay} {az} {bx} {by} {bz} {cx} {cy} {cz}\n')
-                f.write('{} {} {} {} {} {} {} {} {}\n'.format(ax, ay, az, bx, by, bz, cx, cy, cz))
-
-                # write atom coordinates
-                i = 0
-                for atom_name, atom_num in zip(self['atom_name'], self['atom_num']):
-                    for _ in range(atom_num):
-                        x, y, z = (box.T).dot(xyz[i])
-                        #f.write(f'{atom_name} {x} {y} {z}\n')
-                        f.write('{} {} {} {}\n'.format(atom_name, x, y, z))
-                        i += 1
+        return True
 

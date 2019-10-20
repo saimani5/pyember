@@ -27,7 +27,7 @@ def make_fcc(box):
     latt = {}
     latt['nat'] = lx*ly*lz
     latt['box'] = ['fcc', 2*lx, ly, lz]
-    latt['xyzs'] = []
+    latt['xyz'] = []
 
     # box dimensions in lattice units
 
@@ -37,7 +37,7 @@ def make_fcc(box):
         for iy in range(ly):
             for ix in range(lx):
                 rx = 2*ix + (iy + iz)%2
-                latt['xyzs'].append(['Ni', rx, iy, iz])
+                latt['xyz'].append(['Ni', rx, iy, iz])
 
     return latt
 
@@ -52,7 +52,7 @@ def make_heisenberg(dims=(8, 8, 8), pbc=(1, 1, 1), random=True):
     xyz = [(x, y, z) for x, y, z in product(range(dims[0]), range(dims[1]), range(dims[2]))]
     config['xyz'] = np.array(xyz)
 
-    config['latt_types'] = np.zeros(dims, dtype=int)
+    config['latt_atoms'] = np.zeros(dims, dtype=int)
     config['latt_intra'] = np.zeros(tuple(dims) + (2,), dtype='float64')
 
     if random:
