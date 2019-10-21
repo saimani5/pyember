@@ -8,7 +8,7 @@ class MMCsim:
     """
 
     # recognized simulation flow control parameters, with optional defaults
-    known_params = {
+    self.known_params = {
             't_max':100.0,
             'print_period':1,
             'save_period':100,
@@ -20,7 +20,7 @@ class MMCsim:
             'stats_file':None
         }
 
-    def __init__(self, setup_info=None):
+    def __init__(self, setup_info=None, hamilton=None):
         """
         Initializes simulation object either from an input file or a
         dictionary with appropriate parameters.
@@ -33,14 +33,17 @@ class MMCsim:
         """
 
         if isinstance(setup_info, dict):
-            self.sim_params = self.__read_control_dict(setup_info)
+            self.sim_params = self._read_control_dict(setup_info)
         elif isinstance(setup_info, str):
-            self.sim_params = self.__read_control_file(setup_info)
+            self.sim_params = self._read_control_file(setup_info)
         else:
             raise TypeError("Simulation setup info must be either a file name or dict")
 
+        if hamilton is None:
+            raise ValueError("Missing Hamiltonian object")
 
-    def __read_control_dict(self, setup_dict):
+
+    def _read_control_dict(self, setup_dict):
         """
         Verifies that the supplied dictionary contains the necessary parameters
         and no unknown parameters.
@@ -57,7 +60,7 @@ class MMCsim:
         """
 
         # check if all necessary parameters are present
-        for key, val in known_params.items():
+        for key, val in self.known_params.items():
             if val and (key not in setup_dict.keys()):
                 raise ValueError(f"{key} is required, but not present in the supplied parameters")
 
@@ -74,7 +77,7 @@ class MMCsim:
         return param_dict
 
 
-    def __read_control_file(self, setup_file, directory='.'):
+    def _read_control_file(self, setup_file, directory='.'):
         """
         Read control input file into a dict.
         The file is structured as key:value pairs in no particular order. The
@@ -132,13 +135,18 @@ class MMCsim:
         random.seed(random_seed)
 
 
-    def run(self):
+    def run(self, config):
         """
         Run simulation: call model to update configuration.
         In Metropolis MC, 'time' is measured in MC steps
         Simulation is stopped when final time is reached.
 
         Separate runs can be performed for equilibration and production.
+
+        Parameters
+        ----------
+        config: dict or Config object
+            initial configuration
         """
 
         # initial values

@@ -37,8 +37,8 @@ class Heisenberg:
         self.J = J
         self.H = H
         self._setup_neighbors()
-        self.atom_energy = np.zeros(config['atom_type'].shape, dtype=np.float64)
-        self.total_energy = 0.0
+        self.energy_i = np.zeros(config['atom_type'].shape, dtype=np.float64)
+        self.energy_total = 0.0
         self.boxvec = np.diag(config['box'])
         assert len(self.boxvec.shape) == 1, "Lattice box dimensions are not a vector"
 
@@ -63,7 +63,8 @@ class Heisenberg:
         self.ui = np.zeros(len(nbrlist) + 1, dtype=np.float64)
         self.dui = np.zeros(len(nbrlist) + 1, dtype=np.float64)
 
-    def energy_diff_i(self, config, ri, skr):
+
+    def get_energy_diff_i(self, config, ri, skr):
         """Returns interaction energy of atom i
         
         Parameters
@@ -91,7 +92,7 @@ class Heisenberg:
 
         return self.dui
 
-    def energy_i(self, config, ri):
+    def get_energy_i(self, config, ri):
         """Returns interaction energy of atom i"""
 
         sir = config['latt_intra'][ri,:]
@@ -106,7 +107,7 @@ class Heisenberg:
         return self.ui
 
 
-    def energy_total(self, config):
+    def get_energy_total(self, config):
         """Returns interaction energy of the whole lattice system"""
 
         u_tot = 0.0
@@ -115,7 +116,8 @@ class Heisenberg:
             u_tot += 2*ui[0]
             u_tot += np.sum(ui[1:])
 
-        return 0.5*u_tot
+        self.energy_total = 0.5*u_tot
+        return self.energy_total
 
 
     def _check_consistency(self, config):

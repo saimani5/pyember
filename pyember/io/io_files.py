@@ -49,8 +49,6 @@ def read_xyz(filename):
             t = int(sarr[0])
             r = tuple(map(int, sarr[1:4]))
 
-            latt_i.append(
-
             atom_types.append(t)
             xyz.append(r)
 
