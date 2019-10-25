@@ -1,20 +1,4 @@
-#!//anaconda/envs/py36/bin/python
-#
-# File name:   kmc_pld.py
-# Date:        2018/08/03 09:07
-# Author:      Lukas Vlcek
-#
-# Description: 
-#
-
-import sys
-import re
-import random
 import numpy as np
-from itertools import product
-from collections import Counter, defaultdict
-#import events
-from .events import EventTree
 
 class MMCMove:
     """Class managing mmc moves"""
@@ -29,6 +13,8 @@ class MMCMove:
         if move_type == 'spin_flip_3d':
             self.move = self.spin_flip_3d_propose
             self.accept = self.spin_flip_3d_accept
+        else:
+            raise ValueError(f'Move type {move_type} not supported')
 
         self.boxvec = np.diag(config['box'])
 

@@ -2,7 +2,7 @@ import sys
 import os
 import random
 
-class MMCsim:
+class MMCSim(Sim):
     """
     Class for simulation flow control of Metropolis Monte Carlo.
     """
@@ -20,7 +20,7 @@ class MMCsim:
             'stats_file':None
         }
 
-    def __init__(self, setup_info=None, hamilton=None):
+    def __init__(self, setup_info=None, hamilton=None, moves=None, config=None):
         """
         Initializes simulation object either from an input file or a
         dictionary with appropriate parameters.
@@ -41,6 +41,13 @@ class MMCsim:
 
         if hamilton is None:
             raise ValueError("Missing Hamiltonian object")
+
+        if moves is None or moves == {}:
+            raise ValueError("Missing Move objects")
+
+        # Check compatibility of Config with Hamilton and Move objects
+        if config is not None:
+            _check_config_compatibility(config, hamilton, moves):
 
 
     def _read_control_dict(self, setup_dict):
@@ -110,6 +117,17 @@ class MMCsim:
         param_dict = self.__read_control_dict(setup_dict)
 
         return param_dict
+
+    def _check_config_compatibility(self, config, hamilton, moves):
+
+        # Check Hamiltonian
+        if config['latt_type'] != hamilton['latt_type']:
+            raise ValueError("Config and Hamilton lattice types ara incompatible.")
+
+        # Check Moves
+        for key, move in moves.items():
+            if config['latt_type'] != move['latt_type']:
+                raise ValueError(f"Config and {key} move lattice types ara incompatible.")
 
 
     def setup(self, random_seed=42):
