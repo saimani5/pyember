@@ -2,23 +2,11 @@ import sys
 import os
 import random
 
-class MMCSim(Sim):
+class Simulation:
+    """ Class for setting up a simulation based on given control information.
+    
+    Control information is given either in config.yml configuration file or a dict.
     """
-    Class for simulation flow control of Metropolis Monte Carlo.
-    """
-
-    # recognized simulation flow control parameters, with optional defaults
-    self.known_params = {
-            't_max':100.0,
-            'print_period':1,
-            'save_period':100,
-            'measure_period':100,
-            'model_params_file':'model.params',
-            'incfg_file':'input.xyz',
-            'outcfg_file':None,
-            'traj_file':None,
-            'stats_file':None
-        }
 
     def __init__(self, setup_info=None, hamilton=None, moves=None, config=None):
         """

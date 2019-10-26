@@ -1,0 +1,21 @@
+---
+sim_type: MMC
+config:
+    type: latt_sc_n3
+    box:
+        - 8
+        - 8
+        - 8
+    pbc:
+        - true
+        - true
+        - true
+    file: heis.xyz
+Hamilton: Heisenberg
+moves:
+    - spin_flip_3d: 1.0
+time_control:
+    total: 1000
+    save: 10
+    print: 10
+    measure: 10
