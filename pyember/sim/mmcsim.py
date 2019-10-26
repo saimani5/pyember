@@ -167,46 +167,53 @@ class MMCSim(Sim):
             initial configuration
         """
 
+    self.known_params = {
+            't_max':100.0,
+            'print_period':1,
+            'save_period':100,
+            'measure_period':100,
+        }
+
         # initial values
         t = t_print = t_save = t_measure = 0.0
-        it = 0
 
         # print initial numbers
+        print(t, self.kmc.nat)
         if (self.print_period < self.t_max):
             print('time, iteration, number of atoms')
-            print(t, it, self.kmc.nat)
 
         while t < self.t_max:
 
-            t += self.kmc.advance_time()
-
-            self.kmc.step()
-
+            t += 1.0
             it += 1
+
+            # try move
+            event = self.move(self.config)
+
+            # energy difference
+            du = self.hamilton(config, event)
+
+            # accept move
+            if du < 0:
+                self.accept(self.config, event, self.hamilton)
+            elif np.exp(-self.beta*du) > np.random.random():
+                self.accept(self.config, event, self.hamilton)
+
 
             # perform runtime outputs
             if (t - t_print) > self.print_period:
-                print(t, it, self.kmc.nat)
+                print(t, self.hamilton.get_energy_total(), 0.0)
                 t_print = t
 
             if (t - t_save) > self.save_traj_period:
+                io.write_xyz(self.config, 'mmc.xyz')
                 t_save = t
 
             if (t - t_measure) > self.measure_period:
                 t_measure = t
 
-        if (self.print_period < self.t_max):
-            print('End of simulation')
-            print(t, it, self.kmc.nat)
 
-
-    def output(self):
-        """
-        Save the final state and statistics
-        """
-
-        xyz, box, grain = self.kmc.get_conf()
-        write_cfg(self.outcfg_file, xyz, box, grain)
+        print('End of simulation')
 
 
 if __name__ == "__main__":

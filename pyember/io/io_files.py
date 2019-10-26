@@ -64,7 +64,7 @@ def read_xyz(filename):
         
     return config
 
-def write_xyz(config, filename):
+def write_xyz(config, filename, mode="a+"):
     """
     Reads extended xyz file with a single configuration
 
