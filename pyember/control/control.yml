@@ -1,7 +1,7 @@
 ---
 sim_type: MMC
 config:
-    type: latt_sc_n3
+    type: SC_n3
     box:
         - 8
         - 8
@@ -13,7 +13,7 @@ config:
     file: heis.xyz
 Hamilton: Heisenberg
 moves:
-    - spin_flip_3d: 1.0
+    spin_flip_3d: 1.0
 time_control:
     total: 1000
     save: 10

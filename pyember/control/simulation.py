@@ -1,6 +1,9 @@
 import sys
 import os
 import random
+import copy
+import yaml
+from ..sim import MMCSim
 
 class Simulation:
     """ Class for setting up a simulation based on given control information.
@@ -8,7 +11,8 @@ class Simulation:
     Control information is given either in config.yml configuration file or a dict.
     """
 
-    def __init__(self, setup_info=None, hamilton=None, moves=None, config=None):
+
+    def __init__(self, setup_info=None):
         """
         Initializes simulation object either from an input file or a
         dictionary with appropriate parameters.
@@ -16,95 +20,69 @@ class Simulation:
         Parameters
         ----------
         setup_info: str or dict
-            contains information for setting up a simulation flow control
+            contains information for setting up a simulation model and flow control
             variables, which are then stored in a sim_parms dict.
         """
 
+        # Read and check basic consistency of the control file/dict
         if isinstance(setup_info, dict):
-            self.sim_params = self._read_control_dict(setup_info)
+            self.sim_params = self._check_control_dict(setup_info)
         elif isinstance(setup_info, str):
-            self.sim_params = self._read_control_file(setup_info)
+            with open(setup_info, 'r') as f: 
+                setup_dict = yaml.safe_load(f)
+            self.sim_params = self._check_control_dict(setup_dict)
         else:
             raise TypeError("Simulation setup info must be either a file name or dict")
 
-        if hamilton is None:
-            raise ValueError("Missing Hamiltonian object")
-
-        if moves is None or moves == {}:
-            raise ValueError("Missing Move objects")
+        # Build simulation object while checking compatibility of different objects
+        if self.sim_params['sim_type'] == 'MMC':
+            self.sim = MMCSim()
+        elif self.sim_params['sim_type'] == 'KMC':
+            self.sim = KMCSim()
 
         # Check compatibility of Config with Hamilton and Move objects
         if config is not None:
             _check_config_compatibility(config, hamilton, moves):
 
 
-    def _read_control_dict(self, setup_dict):
+    def _check_control_dict(self, setup_dict):
         """
         Verifies that the supplied dictionary contains the necessary parameters
-        and no unknown parameters.
+        and no unknown parameters. Otherwise raises an error.
 
         Parameters
         ----------
         setup_dict: dict
             Supplied dict of parameter values
-
-        Returns
-        -------
-        param_dict: dict
-            Validated dict of parameter values
         """
+
+        required_pars = set('sim_type', 'config', 'moves', 'time_control')
 
         # check if all necessary parameters are present
-        for key, val in self.known_params.items():
-            if val and (key not in setup_dict.keys()):
-                raise ValueError(f"{key} is required, but not present in the supplied parameters")
+        for par in required_params:
+            if par not in setup_dict:
+                raise KeyError(f"{par} is required, but not present in the supplied parameters")
 
-        param_dict = {}
+        # check if KMC has appropriate rate/barrier information
+        if setup_dict['sim_type'] == 'KMC':
+            if 'Hamilton' in setup_dict:
+                assert 'barriers' in setup_dict, "Barriers are missing for KMC"
+            else:
+                assert 'rates' in setup_dict, "No rates information for KMC"
 
-        # check if all supplied parameters are meaningful
-        for key in setup_dict:
-            try:
-                param_dict[key] = setup_dict[key]
-            except KeyError as e:
-                print(f"{key}: Unknown simulation parameter")
-                raise e
+        # check basic time control parameters
+        assert 'total' in setup_dict['time_control'], "Total simulation length is missing"
 
-        return param_dict
+        # if missing set non-essential time control parameters to defaults
+        if 'save' not in setup_dict['time_control']:
+            setup_dict['time_control']['save'] = 10
 
+        if 'print' not in setup_dict['time_control']:
+            setup_dict['time_control']['print'] = 10
 
-    def _read_control_file(self, setup_file, directory='.'):
-        """
-        Read control input file into a dict.
-        The file is structured as key:value pairs in no particular order. The
-        key is used in the parameter dict.
+        if 'measure' not in setup_dict['time_control']:
+            setup_dict['time_control']['measure'] = 10
 
-        Parameters
-        ----------
-        setup_file: str
-            file containing information for setting up the simulation
-        directory: str
-            if supplied, it provides the default directory for input and
-            output files, defaults to the current directory
-
-        Returns
-        -------
-        param_dict: dict
-            dict of parameters and their values
-        """
-        
-        setup_dict = {}
-
-        with open(setup_file, 'r') as f:
-            for line in iter(f.readline, ''):
-                key, value = line.split(':')
-                key = key.strip()
-                value = value.strip()
-                setup_dict[key] = value
-
-        # validate the parameter dict
-        param_dict = self.__read_control_dict(setup_dict)
-
-        return param_dict
 
     def _check_config_compatibility(self, config, hamilton, moves):
 
