@@ -25,6 +25,7 @@ class MMCSim:
         self.mmc_params['moves'] = sim_params['moves']
         config = _check_config(sim_params['config'])
         self.mmc_params['config'] = config
+        self.config = config
 
         # Supported Hamiltonians
         hamilton = {'heisenberg': Heisenberg}
@@ -35,6 +36,7 @@ class MMCSim:
         ham = hamilton[ham_type](config, ham_params)
         self.mmc_params['hamilton'] = ham
         self.du = ham.get_energy_diff_i
+        self.get_energy_total = ham.get_energy_total
 
 
         # Set up moves
@@ -61,7 +63,7 @@ class MMCSim:
         return config
 
 
-    def run(self, config):
+    def run(self, config=None):
         """
         Run simulation: call model to update configuration.
         In Metropolis MC, 'time' is measured in MC steps
@@ -75,9 +77,14 @@ class MMCSim:
             initial configuration
         """
 
+        if config is not None:
+            self.config = config
 
         # initial values
         t = t_print = t_save = t_measure = 0.0
+
+        # initial total energy
+        self.get_energy_total(self.config)
 
         # print initial numbers
         print(t, self.kmc.nat)
@@ -93,7 +100,7 @@ class MMCSim:
             event = self.move(self.config)
 
             # energy difference
-            du = self.du(config, event)
+            du = self.du(self.config, event)
 
             # accept move
             if du < 0:
