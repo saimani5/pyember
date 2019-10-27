@@ -2,7 +2,7 @@
 sim_type: MMC
 config:
     type: SC_n3
-    box:
+    latt_box:
         - 8
         - 8
         - 8
@@ -11,7 +11,12 @@ config:
         - true
         - true
     file: heis.xyz
-Hamilton: Heisenberg
+Hamilton:
+    type: heisenberg
+    params:
+        Temp: 1
+        J: 1.0
+        H: 0.0
 moves:
     spin_flip_3d: 1.0
 time_control:

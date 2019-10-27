@@ -34,6 +34,7 @@ def read_xyz(filename):
         sarr = re.findall('\S+', f.readline())
         config['latt_type'] = sarr[0]
         dims = tuple(map(int, sarr[1:4]))
+        config['latt_box'] = np.array(dims)
         config['box'] = np.diag(dims)
         config['pbc'] = tuple(map(int, sarr[4:7]))
         if len(sarr) > 7:

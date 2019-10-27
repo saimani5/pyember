@@ -2,7 +2,7 @@ import sys
 import os
 import random
 
-class MMCSim(Sim):
+class KMCSim:
     """
     Class for simulation flow control of Metropolis Monte Carlo.
     """

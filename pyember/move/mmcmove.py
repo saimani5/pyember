@@ -20,6 +20,8 @@ class MMCMove:
                 raise ValueError(f'Move type {move_type} not supported')
 
             if move_type == 'spin_flip_3d':
+                self.latt_type = 'SC_n3'
+                assert config['latt_type'] == move.latt_type, "Move does not match the lattice"
                 self.moves.append(self.spin_flip_3d_propose)
                 self.accept.append(self.spin_flip_3d_accept)
             else:
