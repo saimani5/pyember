@@ -3,27 +3,28 @@ import numpy as np
 class MMCMove:
     """Class managing mmc moves"""
 
-    self._supported_moves = set([
-                'spin_flip_3d'
-            ])
 
     def __init__(self, moves, config):
 
         self.moves = []
-        self.accept = []
+        self.accepts = []
         self.probs = []
+
+        supported_moves = set([
+                'spin_flip_3d'
+            ])
 
         prob_sum = 0.0
         for move_type, prob in moves.items():
 
-            if move_type not in self._supported_moves:
+            if move_type not in supported_moves:
                 raise ValueError(f'Move type {move_type} not supported')
 
             if move_type == 'spin_flip_3d':
                 self.latt_type = 'SC_n3'
-                assert config['latt_type'] == move.latt_type, "Move does not match the lattice"
+                assert config['latt_type'] == self.latt_type, "Move does not match the lattice"
                 self.moves.append(self.spin_flip_3d_propose)
-                self.accept.append(self.spin_flip_3d_accept)
+                self.accepts.append(self.spin_flip_3d_accept)
             else:
                 pass
 
@@ -40,12 +41,16 @@ class MMCMove:
     def move(self, config):
 
         # choose move
-        self.try_move = np.searchsorted(self.probs(np.random.random()))
+        self.try_move = np.searchsorted(self.probs, np.random.random())
 
         # perform move
         event = self.moves[self.try_move](config)
 
         return event
+
+
+    def accept(self, config, event, hamilton):
+        self.accepts[self.try_move](config, event, hamilton)
 
 
     def spin_flip_3d_propose(self, config):
@@ -77,14 +82,15 @@ class MMCMove:
     def spin_flip_3d_accept(self, config, event, hamilton):
 
         ri = event[1][0]  # final position
-        config['latt_intra'][ri,:] = event[1][1]  # assign final spin
+        ix, iy, iz = ri  # final position
+        config['latt_intra'][ix, iy, iz,:] = event[1][1]  # assign final spin
 
-        i = config['latt_i'][ri]
+        i = config['latt_i'][ix, iy, iz]
         hamilton.energy_i[i] += hamilton.dui[0] + 0.5*np.sum(hamilton.dui[1:])
 
-        for nbr, du in zip(self.nbrlist, hamilton.dui[1:]):
-            rj = tuple((np.array(ri) + nbr) % self.boxvec)
-            j = config['latt_i'][rj]
+        for nbr, du in zip(hamilton.nbrlist, hamilton.dui[1:]):
+            jx, jy, jz = (np.array(ri) + nbr) % self.boxvec
+            j = config['latt_i'][jx, jy, jz]
             hamilton.energy_i[j] += 0.5*du
 
         hamilton.energy_total += np.sum(hamilton.dui)

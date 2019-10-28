@@ -33,10 +33,10 @@ def read_xyz(filename):
         # box parameters (type, dimension, shape, periodicity)
         sarr = re.findall('\S+', f.readline())
         config['latt_type'] = sarr[0]
-        dims = tuple(map(int, sarr[1:4]))
+        dims = list(map(int, sarr[1:4]))
         config['latt_box'] = np.array(dims)
         config['box'] = np.diag(dims)
-        config['pbc'] = tuple(map(int, sarr[4:7]))
+        config['pbc'] = list(map(int, sarr[4:7]))
         if len(sarr) > 7:
             dim_intra = len(sarr) - 7
 

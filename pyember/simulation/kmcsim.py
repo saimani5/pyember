@@ -7,19 +7,6 @@ class KMCSim:
     Class for simulation flow control of Metropolis Monte Carlo.
     """
 
-    # recognized simulation flow control parameters, with optional defaults
-    self.known_params = {
-            't_max':100.0,
-            'print_period':1,
-            'save_period':100,
-            'measure_period':100,
-            'model_params_file':'model.params',
-            'incfg_file':'input.xyz',
-            'outcfg_file':None,
-            'traj_file':None,
-            'stats_file':None
-        }
-
     def __init__(self, setup_info=None, hamilton=None, moves=None, config=None):
         """
         Initializes simulation object either from an input file or a
@@ -45,89 +32,19 @@ class KMCSim:
         if moves is None or moves == {}:
             raise ValueError("Missing Move objects")
 
-        # Check compatibility of Config with Hamilton and Move objects
-        if config is not None:
-            _check_config_compatibility(config, hamilton, moves):
 
-
-    def _read_control_dict(self, setup_dict):
-        """
-        Verifies that the supplied dictionary contains the necessary parameters
-        and no unknown parameters.
-
-        Parameters
-        ----------
-        setup_dict: dict
-            Supplied dict of parameter values
-
-        Returns
-        -------
-        param_dict: dict
-            Validated dict of parameter values
+    def _check_config(config_params):
+        """Verifies if the control file configuration parameters are
+        compatible with the config file.
         """
 
-        # check if all necessary parameters are present
-        for key, val in self.known_params.items():
-            if val and (key not in setup_dict.keys()):
-                raise ValueError(f"{key} is required, but not present in the supplied parameters")
+        config = read_xyz(sim_params['config']['file'])
 
-        param_dict = {}
+        assert config['latt_type'] == config_params['type'], "Latt type in file does not match"
+        assert config['pbc'] == config_params['pbc'], "PBC in file does not match"
+        assert config['latt_box'] == config_params['latt_box'], "Latt box in file does not match"
 
-        # check if all supplied parameters are meaningful
-        for key in setup_dict:
-            try:
-                param_dict[key] = setup_dict[key]
-            except KeyError as e:
-                print(f"{key}: Unknown simulation parameter")
-                raise e
-
-        return param_dict
-
-
-    def _read_control_file(self, setup_file, directory='.'):
-        """
-        Read control input file into a dict.
-        The file is structured as key:value pairs in no particular order. The
-        key is used in the parameter dict.
-
-        Parameters
-        ----------
-        setup_file: str
-            file containing information for setting up the simulation
-        directory: str
-            if supplied, it provides the default directory for input and
-            output files, defaults to the current directory
-
-        Returns
-        -------
-        param_dict: dict
-            dict of parameters and their values
-        """
-        
-        setup_dict = {}
-
-        with open(setup_file, 'r') as f:
-            for line in iter(f.readline, ''):
-                key, value = line.split(':')
-                key = key.strip()
-                value = value.strip()
-                setup_dict[key] = value
-
-        # validate the parameter dict
-        param_dict = self.__read_control_dict(setup_dict)
-
-        return param_dict
-
-    def _check_config_compatibility(self, config, hamilton, moves):
-
-        # Check Hamiltonian
-        if config['latt_type'] != hamilton['latt_type']:
-            raise ValueError("Config and Hamilton lattice types ara incompatible.")
-
-        # Check Moves
-        for key, move in moves.items():
-            if config['latt_type'] != move['latt_type']:
-                raise ValueError(f"Config and {key} move lattice types ara incompatible.")
+        return config
 
 
     def setup(self, random_seed=42):

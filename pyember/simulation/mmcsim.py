@@ -1,5 +1,5 @@
 import numpy as np
-from ..io import read_xyz
+from ..io import read_xyz, write_xyz
 from ..interact import Heisenberg
 from ..move import MMCMove
 
@@ -23,9 +23,13 @@ class MMCSim:
         self.mmc_params = {}
         self.mmc_params['time_control'] = sim_params['time_control']
         self.mmc_params['moves'] = sim_params['moves']
-        config = _check_config(sim_params['config'])
+        config = self._check_config(sim_params['config'])
         self.mmc_params['config'] = config
         self.config = config
+        self.t_max = self.mmc_params['time_control']['total']
+        self.print_period = self.mmc_params['time_control']['print']
+        self.save_traj_period = self.mmc_params['time_control']['save']
+        self.measure_period = self.mmc_params['time_control']['measure']
 
         # Supported Hamiltonians
         hamilton = {'heisenberg': Heisenberg}
@@ -35,9 +39,9 @@ class MMCSim:
         ham_params = sim_params['hamilton']['params']
         ham = hamilton[ham_type](config, ham_params)
         self.mmc_params['hamilton'] = ham
+        self.hamilton = ham
         self.du = ham.get_energy_diff_i
         self.get_energy_total = ham.get_energy_total
-
 
         # Set up moves
         self.mmc_params['moves'] = MMCMove(sim_params['moves'], config)
@@ -45,20 +49,19 @@ class MMCSim:
         self.accept = self.mmc_params['moves'].accept
 
         # initialize random number generator
-        np.random.seed(random_seed)
+        np.random.seed(sim_params['random_seed'])
 
 
 
-    def _check_config(config_params):
+    def _check_config(self, config_params):
         """Verifies if the control file configuration parameters are
         compatible with the config file.
         """
-
-        config = read_xyz(sim_params['config']['file'])
+        config = read_xyz(config_params['file'])
 
         assert config['latt_type'] == config_params['type'], "Latt type in file does not match"
-        assert config['pbc'] == config_params['pbc'], "PBC in file does not match"
-        assert config['latt_box'] == config_params['latt_box'], "Latt box in file does not match"
+        assert config['pbc'] == config_params['pbc'], f"PBC in file does not match {config['pbc']} vs {config_params['pbc']}"
+        assert np.array_equal(config['latt_box'], config_params['latt_box']), "Latt box in file does not match"
 
         return config
 
@@ -83,39 +86,39 @@ class MMCSim:
         # initial values
         t = t_print = t_save = t_measure = 0.0
 
-        # initial total energy
-        self.get_energy_total(self.config)
-
-        # print initial numbers
-        print(t, self.kmc.nat)
-        if (self.print_period < self.t_max):
-            print('time, iteration, number of atoms')
+        # initial energy and magnetization statistics
+        tot_ene = self.hamilton.get_energy_total(self.config)
+        tot_mag, tsx, tsy, tsz = self.hamilton.get_magnetization(self.config)
+        print('time, total_energy, |M|, Mx, My, Mz')
+        print(t, tot_ene, round(tot_mag), round(tsx), round(tsy), round(tsz))
 
         while t < self.t_max:
 
             t += 1.0
-            it += 1
 
             # try move
             event = self.move(self.config)
 
             # energy difference
-            du = self.du(self.config, event)
+            beta_du = self.du(self.config, event)
+            #print('du', beta_du)
 
             # accept move
-            if du < 0:
+            if beta_du < 0:
                 self.accept(self.config, event, self.hamilton)
-            elif np.exp(-self.beta*du) > np.random.random():
+            elif np.exp(-beta_du) > np.random.random():
                 self.accept(self.config, event, self.hamilton)
 
 
             # perform runtime outputs
             if (t - t_print) > self.print_period:
-                print(t, self.hamilton.get_energy_total(), 0.0)
+                tot_ene = self.hamilton.get_energy_total(self.config)
+                tot_mag, tsx, tsy, tsz = self.hamilton.get_magnetization(self.config)
+                print(t, tot_ene, round(tot_mag), round(tsx), round(tsy), round(tsz))
                 t_print = t
 
             if (t - t_save) > self.save_traj_period:
-                io.write_xyz(self.config, 'mmc.xyz')
+                write_xyz(self.config, 'mmc.xyz')
                 t_save = t
 
             if (t - t_measure) > self.measure_period:

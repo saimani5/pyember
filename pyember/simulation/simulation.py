@@ -35,6 +35,9 @@ class Simulation:
         else:
             raise TypeError("Simulation setup info must be either a file name or dict")
 
+        if 'random_seed' not in setup_info:
+            self.sim_params['random_seed'] = 42
+
         # Build simulation object while checking compatibility of different objects
         if self.sim_params['sim_type'] == 'MMC':
             mmc = MMCSim(self.sim_params)
@@ -55,7 +58,7 @@ class Simulation:
             Supplied dict of parameter values
         """
 
-        required_pars = set('sim_type', 'config', 'moves', 'time_control')
+        required_params = set(['sim_type', 'config', 'moves', 'time_control'])
 
         # check if all necessary parameters are present
         for par in required_params:
@@ -82,6 +85,7 @@ class Simulation:
         if 'measure' not in setup_dict['time_control']:
             setup_dict['time_control']['measure'] = 10
 
+        return setup_dict
 
 if __name__ == "__main__":
 

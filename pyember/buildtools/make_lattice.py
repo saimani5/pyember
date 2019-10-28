@@ -52,14 +52,24 @@ def make_heisenberg(dims=(8, 8, 8), pbc=(1, 1, 1), random=True):
     xyz = [(x, y, z) for x, y, z in product(range(dims[0]), range(dims[1]), range(dims[2]))]
     config['xyz'] = np.array(xyz)
 
+    config['latt_type'] = 'SC_n3'
     config['latt_atoms'] = np.zeros(dims, dtype=int)
-    config['latt_intra'] = np.zeros(tuple(dims) + (2,), dtype='float64')
+    config['latt_intra'] = np.zeros(tuple(dims) + (3,), dtype='float64')
 
     if random:
-        # cos(theta) uniformly distributed in (-1, 1)
-        config['latt_intra'][...,0] = 2.*np.random.random(size=dims) - 1.
-        # phi uniformly distributed in (0, 2*pi)
-        config['latt_intra'][...,1] = 2.*np.pi*np.random.random(size=dims) 
+        # new spin orientation
+        sz = 2*np.random.random(size=dims) - 1
+        st = np.sqrt(1 - sz*sz)
+        phi = 2*np.pi*np.random.random(size=dims)
+        sx = st*np.sin(phi)
+        sy = st*np.cos(phi)
+
+        config['latt_intra'][...,0] = sx
+        config['latt_intra'][...,1] = sy
+        config['latt_intra'][...,2] = sz
+
+        r2 = sx**2 + sy**2 + sz**2 - 1.0
+        assert np.max(r2) < 1e-8, "Spin magnitude not close to 1"
 
     return config
 
@@ -80,7 +90,5 @@ if __name__ == "__main__":
 
     # make lattice
     latt = make_lattice[ltype](box)
-
-    write_latt(latt, 'init.xyz')
 
 # end of mklatt.py 

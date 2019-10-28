@@ -14,16 +14,16 @@ config:
 hamilton:
     type: heisenberg
     params:
-        Temp: 1
+        Temp: 0.2
         J: 1.0
         H:
             - 0.0
             - 0.0
-            - 0.0
+            - 1.0
 moves:
     spin_flip_3d: 1.0
 time_control:
-    total: 1000
-    save: 10
-    print: 10
-    measure: 10
+    total: 100000
+    save: 1000
+    print: 1000
+    measure: 1000
